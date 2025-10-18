@@ -1,1 +1,1 @@
-export { DynamoDBSaver } from './saver';
+export { DynamoDBSaver } from "./saver";
