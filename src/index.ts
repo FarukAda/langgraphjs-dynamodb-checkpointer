@@ -1,0 +1,1 @@
+export { DynamoDBSaver } from './saver';

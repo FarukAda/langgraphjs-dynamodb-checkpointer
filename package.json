@@ -1,0 +1,61 @@
+{
+  "name": "@farukada/langgraphjs-dynamodb-checkpointer",
+  "version": "0.0.1",
+  "license": "MIT",
+
+  "description": "DynamoDB implementation of BaseCheckpointSaver for LangGraphJS Checkpointer",
+  "keywords": [
+    "langgraph",
+    "langchain",
+    "dynamodb",
+    "aws"
+  ],
+  "author": "Faruk Ada <info@farukada.com>",
+  "homepage": "https://github.com/FarukAda/langgraphjs-dynamodb-checkpointer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FarukAda/langgraphjs-dynamodb-checkpointer"
+  },
+  "bugs": {
+    "url": "https://github.com/FarukAda/langgraphjs-dynamodb-checkpointer/issues"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts",
+    "format": "prettier --write \"src/**/*.{ts,js,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json,md}\""
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.38.0",
+    "@tsconfig/recommended": "^1.0.10",
+    "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-no-instanceof": "^1.0.1",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.4.0",
+    "jiti": "^2.6.1",
+    "prettier": "^3.6.2",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.46.1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.913.0",
+    "@aws-sdk/lib-dynamodb": "^3.913.0",
+    "@langchain/core": "^1.0.1",
+    "@langchain/langgraph-checkpoint": "^1.0.0"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ]
+}
