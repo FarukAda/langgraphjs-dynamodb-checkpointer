@@ -246,25 +246,27 @@ export class DynamoDBSaver extends BaseCheckpointSaver {
       throw new Error("Missing checkpoint_id");
     }
 
-    const writeItems = writes.map(async (write, idx) => {
-      const [type, serializedValue] = await this.serde.dumpsTyped(write[1]);
-      const item = new Writer({
-        thread_id,
-        checkpoint_ns,
-        checkpoint_id,
-        task_id: taskId,
-        idx,
-        channel: write[0],
-        type,
-        value: serializedValue,
-      });
+    const writeItems = await Promise.all(
+      writes.map(async (write, idx) => {
+        const [type, serializedValue] = await this.serde.dumpsTyped(write[1]);
+        const item = new Writer({
+          thread_id,
+          checkpoint_ns,
+          checkpoint_id,
+          task_id: taskId,
+          idx,
+          channel: write[0],
+          type,
+          value: serializedValue,
+        });
 
-      return {
-        PutRequest: {
-          Item: item.toDynamoDBItem(),
-        },
-      };
-    });
+        return {
+          PutRequest: {
+            Item: item.toDynamoDBItem(),
+          },
+        };
+      }),
+    );
 
     const batches = [];
     for (let i = 0; i < writeItems.length; i += 25) {
@@ -278,18 +280,6 @@ export class DynamoDBSaver extends BaseCheckpointSaver {
         },
       });
     }
-  }
-
-  private getWritePartitionKey(item: {
-    thread_id: string;
-    checkpoint_id: string;
-    checkpoint_ns: string;
-  }): string {
-    return `${item.thread_id}:${item.checkpoint_id}:${item.checkpoint_ns}`;
-  }
-
-  private getWriteSortKey(item: { task_id: string; idx: number }): string {
-    return `${item.task_id}:${item.idx}`;
   }
 
   private validateConfigurable(
@@ -330,7 +320,7 @@ export class DynamoDBSaver extends BaseCheckpointSaver {
     });
 
     if (checkpoints.Items && checkpoints.Items.length > 0) {
-      const deleteRequests = checkpoints.Items.map((item: any) => ({
+      const deleteRequests = (checkpoints.Items as CheckpointItem[]).map((item) => ({
         DeleteRequest: {
           Key: {
             thread_id: item.thread_id,
@@ -364,7 +354,7 @@ export class DynamoDBSaver extends BaseCheckpointSaver {
         });
 
         if (writes.Items && writes.Items.length > 0) {
-          const deleteWriteRequests = writes.Items.map((item: any) => ({
+          const deleteWriteRequests = (writes.Items as DynamoDBWriteItem[]).map((item) => ({
             DeleteRequest: {
               Key: {
                 thread_id_checkpoint_id_checkpoint_ns:
