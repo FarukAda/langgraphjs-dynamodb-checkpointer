@@ -47,6 +47,12 @@ resource "aws_dynamodb_table" "checkpoints_table" {
     name = "checkpoint_id"
     type = "S"
   }
+
+  # Enable TTL for automatic cleanup
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
 }
 
 # Writes Table
@@ -65,6 +71,12 @@ resource "aws_dynamodb_table" "writes_table" {
   attribute {
     name = "task_id_idx"
     type = "S"
+  }
+
+  # Enable TTL for automatic cleanup
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
   }
 }
 ```
@@ -88,6 +100,7 @@ export class DynamoDbStack extends cdk.Stack {
             billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
             partitionKey: { name: 'thread_id', type: dynamodb.AttributeType.STRING },
             sortKey: { name: 'checkpoint_id', type: dynamodb.AttributeType.STRING },
+            timeToLiveAttribute: 'ttl', // Enable TTL
         });
 
         // Writes Table
@@ -99,9 +112,11 @@ export class DynamoDbStack extends cdk.Stack {
                 type: dynamodb.AttributeType.STRING,
             },
             sortKey: { name: 'task_id_idx', type: dynamodb.AttributeType.STRING },
+            timeToLiveAttribute: 'ttl', // Enable TTL
         });
     }
 }
+
 ```
 
 ## Using the Checkpoint Saver
@@ -113,17 +128,19 @@ the checkpoints and writes tables. In this scenario the DynamoDB client will
 be instantiated with the default configuration, great for running on AWS Lambda.
 
 ```typescript
-import { DynamoDBSaver } from 'langgraphjs-dynamodb-checkpointer';
-...
+import { DynamoDBSaver } from '@farukada/langgraphjs-dynamodb-checkpointer';
+
 const checkpointsTableName = 'YourCheckpointsTableName';
 const writesTableName = 'YourWritesTableName';
 
 const memory = new DynamoDBSaver({
     checkpointsTableName,
     writesTableName,
+    ttlDays: 7, // Automatically delete checkpoints after 7 days
 });
 
 const graph = workflow.compile({ checkpointer: memory });
+
 ```
 
 ### Providing Client Configuration

@@ -6,13 +6,13 @@ import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import type { RunnableConfig } from "@langchain/core/runnables";
 import {
   BaseCheckpointSaver,
-  type SerializerProtocol,
-  type CheckpointTuple,
   type Checkpoint,
+  type CheckpointListOptions,
   type CheckpointMetadata,
   type CheckpointPendingWrite,
-  type CheckpointListOptions,
+  type CheckpointTuple,
   type PendingWrite,
+  type SerializerProtocol,
 } from "@langchain/langgraph-checkpoint";
 import {
   CheckpointItem,
@@ -26,23 +26,27 @@ export class DynamoDBSaver extends BaseCheckpointSaver {
   private docClient: DynamoDBDocument;
   private readonly checkpointsTableName: string;
   private readonly writesTableName: string;
+  private readonly ttlDays?: number;
 
   constructor({
     clientConfig,
     serde,
     checkpointsTableName,
     writesTableName,
+    ttlDays,
   }: {
     clientConfig?: DynamoDBClientConfig;
     serde?: SerializerProtocol;
     checkpointsTableName: string;
     writesTableName: string;
+    ttlDays?: number;
   }) {
     super(serde);
     this.client = new DynamoDBClient(clientConfig || {});
     this.docClient = DynamoDBDocument.from(this.client);
     this.checkpointsTableName = checkpointsTableName;
     this.writesTableName = writesTableName;
+    this.ttlDays = ttlDays;
   }
 
   async getTuple(config: RunnableConfig): Promise<CheckpointTuple | undefined> {
@@ -210,7 +214,7 @@ export class DynamoDBSaver extends BaseCheckpointSaver {
       );
     }
 
-    const item: CheckpointItem = {
+    const item: CheckpointItem & { ttl?: number } = {
       thread_id,
       checkpoint_ns: config.configurable?.checkpoint_ns ?? "",
       checkpoint_id: checkpoint.id!,
@@ -219,6 +223,10 @@ export class DynamoDBSaver extends BaseCheckpointSaver {
       checkpoint: serializedCheckpoint,
       metadata: serializedMetadata,
     };
+
+    if (this.ttlDays !== undefined) {
+      item.ttl = Math.floor(Date.now() / 1000) + this.ttlDays * 24 * 60 * 60;
+    }
 
     await this.docClient.put({
       TableName: this.checkpointsTableName,
@@ -259,6 +267,12 @@ export class DynamoDBSaver extends BaseCheckpointSaver {
           type,
           value: serializedValue,
         });
+
+        const dynamoItem = item.toDynamoDBItem();
+        if (this.ttlDays !== undefined) {
+          (dynamoItem as any).ttl =
+            Math.floor(Date.now() / 1000) + this.ttlDays * 24 * 60 * 60;
+        }
 
         return {
           PutRequest: {
@@ -320,14 +334,16 @@ export class DynamoDBSaver extends BaseCheckpointSaver {
     });
 
     if (checkpoints.Items && checkpoints.Items.length > 0) {
-      const deleteRequests = (checkpoints.Items as CheckpointItem[]).map((item) => ({
-        DeleteRequest: {
-          Key: {
-            thread_id: item.thread_id,
-            checkpoint_id: item.checkpoint_id,
+      const deleteRequests = (checkpoints.Items as CheckpointItem[]).map(
+        (item) => ({
+          DeleteRequest: {
+            Key: {
+              thread_id: item.thread_id,
+              checkpoint_id: item.checkpoint_id,
+            },
           },
-        },
-      }));
+        }),
+      );
 
       // Delete checkpoints in batches of 25 (DynamoDB limit)
       for (let i = 0; i < deleteRequests.length; i += 25) {
@@ -354,15 +370,17 @@ export class DynamoDBSaver extends BaseCheckpointSaver {
         });
 
         if (writes.Items && writes.Items.length > 0) {
-          const deleteWriteRequests = (writes.Items as DynamoDBWriteItem[]).map((item) => ({
-            DeleteRequest: {
-              Key: {
-                thread_id_checkpoint_id_checkpoint_ns:
-                  item.thread_id_checkpoint_id_checkpoint_ns,
-                task_id_idx: item.task_id_idx,
+          const deleteWriteRequests = (writes.Items as DynamoDBWriteItem[]).map(
+            (item) => ({
+              DeleteRequest: {
+                Key: {
+                  thread_id_checkpoint_id_checkpoint_ns:
+                    item.thread_id_checkpoint_id_checkpoint_ns,
+                  task_id_idx: item.task_id_idx,
+                },
               },
-            },
-          }));
+            }),
+          );
 
           for (let i = 0; i < deleteWriteRequests.length; i += 25) {
             const batch = deleteWriteRequests.slice(i, i + 25);
