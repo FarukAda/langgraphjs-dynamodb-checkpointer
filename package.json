@@ -1,6 +1,6 @@
 {
   "name": "@farukada/langgraphjs-dynamodb-checkpointer",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "license": "MIT",
   "description": "DEPRECATED — use @farukada/aws-langgraph-dynamodb-ts instead. DynamoDB implementation of BaseCheckpointSaver for LangGraphJS Checkpointer",
   "keywords": [
