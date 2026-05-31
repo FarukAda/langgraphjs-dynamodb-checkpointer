@@ -1,12 +1,26 @@
 # langgraphjs-dynamodb-checkpointer
 
-⚠️ **This is a test project and is currently under development.**
+> # ⚠️ DEPRECATED
+>
+> **This package is deprecated and no longer maintained.**
+>
+> It has been replaced by **[`@farukada/aws-langgraph-dynamodb-ts`](https://www.npmjs.com/package/@farukada/aws-langgraph-dynamodb-ts)**.
+>
+> Please migrate to the new package:
+>
+> ```bash
+> npm install @farukada/aws-langgraph-dynamodb-ts
+> ```
+
+---
 
 Implementation of a LangGraph.js CheckpointSaver that uses AWS DynamoDB.
 
 This package was created as an updated alternative to [langgraphjs-checkpoint-dynamodb](https://github.com/researchwiseai/langgraphjs-checkpoint-dynamodb), which is currently outdated.
 
 ## Package name
+
+> ⚠️ Deprecated. Use [`@farukada/aws-langgraph-dynamodb-ts`](https://www.npmjs.com/package/@farukada/aws-langgraph-dynamodb-ts) instead.
 
 ```bash
 @farukada/langgraphjs-dynamodb-checkpointer
@@ -203,7 +217,7 @@ const memory = new DynamoDBSaver({
 
 ## Status
 
-🚧 This project is in active development and testing. Use at your own risk in production environments.
+⛔ **Deprecated.** This package is no longer maintained. Use [`@farukada/aws-langgraph-dynamodb-ts`](https://www.npmjs.com/package/@farukada/aws-langgraph-dynamodb-ts) instead.
 
 ## License
 
@@ -211,6 +225,7 @@ MIT
 
 ## Related Projects
 
+- [@farukada/aws-langgraph-dynamodb-ts](https://www.npmjs.com/package/@farukada/aws-langgraph-dynamodb-ts) (successor — use this instead)
 - [LangGraph.js](https://github.com/langchain-ai/langgraphjs)
 - [LangChain.js](https://github.com/langchain-ai/langchainjs)
 - [Original langgraphjs-checkpoint-dynamodb](https://github.com/researchwiseai/langgraphjs-checkpoint-dynamodb) (outdated)
